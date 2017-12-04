@@ -54,12 +54,15 @@ def train():
     model = create_mode((128, 128, 3))
     keras.utils.plot_model(model, to_file=OUTPUT_PATH + "/cnn.png", show_shapes=True)
 
-    dogs = list_images(TRAIN_PATH)[:32]  # TODO Consume huge amount of mem
+    dogs = list_images(TRAIN_PATH)  # TODO Consume huge amount of mem
     print(len(dogs))
     images = []
     ys = []
     for dog in dogs:
         image = ndimage.imread(os.path.join(TRAIN_PATH, dog))
+        if image.shape[0] < 128 or image.shape[1] < 128:
+            print("%s image too small" % dog)
+            continue
         image = image[:128, :128, :]  # TODO Inconsistent image shapes
         images.append(image)
         label = labels[dog]
@@ -77,10 +80,14 @@ def train():
 
 
 def predict():
-    dogs = list_images(TEST_PATH)[:16]  # TODO
+    dogs = list_images(TEST_PATH)  # TODO
     images = []
     for dog in dogs:
         image = ndimage.imread(os.path.join(TEST_PATH, dog))
+        if image.shape[0] < 128 or image.shape[1] < 128:
+            print("%s image too small" % dog)
+            images.append(np.zeros((128, 128, 3)))
+            continue
         image = image[:128, :128, :]  # TODO
         images.append(image)
     images = np.array(images)
@@ -89,18 +96,18 @@ def predict():
     ys = model.predict(images)
 
     with open(os.path.join(OUTPUT_PATH, "predict.csv"), "w") as out:
-        out.write("id, ")
+        out.write("id,")
         for label in all_labels:
-            out.write(label + ", ")
+            out.write(label + ",")
         out.write("\n")
 
         for i in range(len(ys)):
-            out.write("%s, " % dogs[i])
+            out.write("%s," % dogs[i].split(".")[0])
             for prob in ys[i]:
-                out.write("%f, " % prob)
+                out.write("%f," % prob)
             out.write("\n")
 
 
 if __name__ == "__main__":
-    train()
+    # train()
     predict()
