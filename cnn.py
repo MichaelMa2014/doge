@@ -3,7 +3,8 @@ import os
 import keras
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Activation, Dropout, Flatten, Dense
-from scipy import ndimage
+import keras.preprocessing.image
+# from keras.preprocessing import image as keras_image
 import numpy as np
 
 from util import TRAIN_PATH, TEST_PATH, OUTPUT_PATH, labels, all_labels, list_images
@@ -61,14 +62,9 @@ def train():
     print(len(dogs))
     images = []
     ys = []
-    filtered = 0
     for dog in dogs:
-        image = ndimage.imread(os.path.join(TRAIN_PATH, dog))
-        if image.shape[0] < width or image.shape[1] < height:
-            print("%s image too small" % dog)
-            filtered += 1
-            continue
-        image = image[:width, :height, :]  # TODO Inconsistent image shapes
+        image = keras.preprocessing.image.load_img(os.path.join(TRAIN_PATH, dog), target_size=(width, height))
+        image = keras.preprocessing.image.img_to_array(image)
         images.append(image)
         label = labels[dog]
 
@@ -78,7 +74,6 @@ def train():
         y = np.zeros(120)
         y[all_labels.index(label)] = 1
         ys.append(y)
-    print("filtered %d from %d" % (filtered, len(dogs)))
     images = np.array(images)
     ys = np.array(ys)
     model.fit(images, ys, verbose=2)
@@ -89,12 +84,8 @@ def predict():
     dogs = list_images(TEST_PATH)  # TODO
     images = []
     for dog in dogs:
-        image = ndimage.imread(os.path.join(TEST_PATH, dog))
-        if image.shape[0] < width or image.shape[1] < height:
-            print("%s image too small" % dog)
-            images.append(np.zeros((width, height, 3)))
-            continue
-        image = image[:width, :height, :]  # TODO
+        image = keras.preprocessing.image.load_img(os.path.join(TEST_PATH, dog), target_size=(width, height))
+        image = keras.preprocessing.image.img_to_array(image)
         images.append(image)
     images = np.array(images)
 
